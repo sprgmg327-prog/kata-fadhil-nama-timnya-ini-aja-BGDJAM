@@ -13,9 +13,8 @@ public class TimerScript : MonoBehaviour
         timerBerjalan = true;
     }
 
-    void Update()
+  void Update()
     {
-        // FITUR: Restart Mandiri (Tekan R)
         if (Input.GetKeyDown(KeyCode.R))
         {
             RestartLevel();
@@ -26,7 +25,9 @@ public class TimerScript : MonoBehaviour
             if (waktuTersisa > 0)
             {
                 waktuTersisa -= Time.deltaTime;
-                UpdateTampilanWaktu(waktuTersisa);
+                
+                // PERBAIKAN: Gunakan Mathf.Max agar angka tidak minus sebelum ditampilkan
+                UpdateTampilanWaktu(Mathf.Max(0, waktuTersisa));
             }
             else
             {
@@ -34,7 +35,9 @@ public class TimerScript : MonoBehaviour
                 waktuTersisa = 0;
                 timerBerjalan = false;
                 
-                // FITUR: Auto-Restart saat waktu habis
+                // Update tampilan terakhir ke 00:00 sebelum restart
+                UpdateTampilanWaktu(0); 
+
                 RestartLevel();
             }
         }
