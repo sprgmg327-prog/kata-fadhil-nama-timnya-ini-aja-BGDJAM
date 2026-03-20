@@ -4,10 +4,10 @@
 TagManager:
   serializedVersion: 3
   tags:
-  - Tembok
   - Halangan
   - Trampolin
   - Bel
+  - Kopi
   layers:
   - Default
   - TransparentFX

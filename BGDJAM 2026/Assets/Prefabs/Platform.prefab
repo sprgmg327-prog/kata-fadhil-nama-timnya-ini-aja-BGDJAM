@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 6988337299011527344}
   - component: {fileID: 5790667327172830851}
   - component: {fileID: -5751452257952805553}
-  m_Layer: 0
-  m_Name: Tembok
+  m_Layer: 3
+  m_Name: Platform
   m_TagString: Halangan
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
