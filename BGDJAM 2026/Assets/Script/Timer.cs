@@ -1,20 +1,26 @@
 using UnityEngine;
-using TMPro; // Penting untuk TextMeshPro
+using TMPro; 
+using UnityEngine.SceneManagement; // Tambahkan ini untuk mengatur Scene
 
 public class TimerScript : MonoBehaviour
 {
-    public float waktuTersisa = 10f; // Set durasi dalam detik
+    public float waktuTersisa = 10f; 
     public bool timerBerjalan = false;
-    public TextMeshProUGUI teksTimer; // Drag komponen Text ke sini di Inspector
+    public TextMeshProUGUI teksTimer; 
 
     void Start()
     {
-        // Mulai timer otomatis saat game dimulai
         timerBerjalan = true;
     }
 
     void Update()
     {
+        // FITUR: Restart Mandiri (Tekan R)
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            RestartLevel();
+        }
+
         if (timerBerjalan)
         {
             if (waktuTersisa > 0)
@@ -27,18 +33,24 @@ public class TimerScript : MonoBehaviour
                 Debug.Log("Waktu Habis!");
                 waktuTersisa = 0;
                 timerBerjalan = false;
-                // Kamu bisa panggil fungsi Game Over di sini
+                
+                // FITUR: Auto-Restart saat waktu habis
+                RestartLevel();
             }
         }
     }
 
     void UpdateTampilanWaktu(float waktu)
     {
-        // Menghitung menit dan detik
         float menit = Mathf.FloorToInt(waktu / 60);
         float detik = Mathf.FloorToInt(waktu % 60);
-
-        // Format string agar tampil 00:00
         teksTimer.text = string.Format("{0:00}:{1:00}", menit, detik);
+    }
+
+    // Fungsi bantuan untuk memuat ulang scene yang sedang aktif
+    void RestartLevel()
+    {
+        // Mengambil index scene yang aktif sekarang lalu memuatnya ulang
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
