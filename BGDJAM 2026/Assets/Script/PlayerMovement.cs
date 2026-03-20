@@ -32,7 +32,7 @@ public class PlayerRunner : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         currentSpeed = baseSpeed;
         
-        // Mengatur gravitasi agar jatuh lebih cepat (khas game platformer agar tidak melayang lambat)
+        // Mengatur gravitasi agar jatuh lebih cepat (khas game platformer)
         rb.gravityScale = 3.5f; 
     }
 
@@ -56,19 +56,16 @@ public class PlayerRunner : MonoBehaviour
         {
             if (isGrounded)
             {
-                // Lompat dari tanah
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
             }
-            else if (canAirJump)
+            else if (canAirJump) // Lompat dari udara karena mukul Bel
             {
-                // Lompat di udara (didapat dari mukul Bel)
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
-                canAirJump = false; // Jatah lompat udara habis
+                canAirJump = false; 
             }
         }
 
         // Saat tombol Spasi DILEPAS (Mekanik Tap vs Hold)
-        // Jika dilepas saat player masih bergerak naik, potong kecepatan naiknya jadi setengah
         if (Input.GetKeyUp(KeyCode.Space) && rb.linearVelocity.y > 0)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * tapJumpMultiplier);
@@ -79,19 +76,16 @@ public class PlayerRunner : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            // Buat lingkaran deteksi di titik pukulan
             Collider2D[] hitObjects = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, destructibleLayer);
 
             foreach (Collider2D obj in hitObjects)
             {
-                // Kalau yang dipukul adalah Bel
                 if (obj.CompareTag("Bel"))
                 {
-                    canAirJump = true; // Beri jatah 1x lompat di udara
+                    canAirJump = true; 
                     Debug.Log("Bel dipukul! Dapat 1x lompat udara.");
                 }
                 
-                // Hancurkan objeknya (berlaku untuk Pintu, Banner, Kursi, Temen, Tempat Sampah, Bel)
                 Destroy(obj.gameObject);
             }
         }
@@ -99,20 +93,26 @@ public class PlayerRunner : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        // CCTV 1: Tampilkan di Console nama dan tag objek yang ditabrak
+        Debug.Log("Menabrak objek: " + collision.gameObject.name + " | Tag: " + collision.gameObject.tag);
+
         // Nabrak Trampolin -> Mental tinggi
         if (collision.gameObject.CompareTag("Trampolin"))
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, trampolineJumpForce);
-            return; // Hentikan pengecekan di bawahnya
+            return; 
         }
 
-        // Nabrak Objek/Tembok -> Berbalik arah
-        // Jika nabrak objek berlayer "Destructible" (karena telat mukul) ATAU tag "Halangan" (seperti Meja)
+        // Nabrak Tembok Tilemap (Halangan) ATAU rintangan yang lupa dipukul (Destructible)
         if (((1 << collision.gameObject.layer) & destructibleLayer) != 0 || collision.gameObject.CompareTag("Halangan"))
         {
-            // Pastikan kita nabrak dari samping, bukan numpang di atasnya
             ContactPoint2D contact = collision.contacts[0];
-            if (Mathf.Abs(contact.normal.x) > 0.5f) 
+            
+            // CCTV 2: Tampilkan nilai pantulan
+            Debug.Log("Nilai Normal X: " + contact.normal.x);
+
+            // SYARAT DIPERBARUI: Diturunkan jadi > 0.1f agar lebih toleran terhadap bentuk Tilemap
+            if (Mathf.Abs(contact.normal.x) > 0.1f) 
             {
                 TurnAround();
             }
@@ -124,8 +124,8 @@ public class PlayerRunner : MonoBehaviour
         // Menyentuh Vending Machine (Power-up Kopi)
         if (collision.CompareTag("Kopi"))
         {
-            currentSpeed *= 1.5f; // Kecepatan jadi 1.5x lipat
-            Destroy(collision.gameObject); // Vending machine hilang setelah diambil
+            currentSpeed *= 1.5f; 
+            Destroy(collision.gameObject); 
         }
     }
 
@@ -137,17 +137,18 @@ public class PlayerRunner : MonoBehaviour
         Vector3 localScale = transform.localScale;
         localScale.x *= -1;
         transform.localScale = localScale;
+
+        // TAMBAHAN ANTI NYANGKUT: Dorong player sedikit ke arah jalan yang baru
+        transform.position = new Vector2(transform.position.x + (moveDirection * 0.1f), transform.position.y);
+        
+        Debug.Log("Putar balik berhasil! Sekarang menghadap ke: " + (moveDirection == 1 ? "Kanan" : "Kiri"));
     }
 
     void CheckGrounded()
     {
-        // Ngecek apakah lingkaran di kaki menyentuh layer Ground
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-        
-        // Reset speed jika butuh, tapi di sini kecepatan kopi permanen kecuali diatur ulang
     }
 
-    // Untuk menampilkan lingkaran deteksi kaki dan pukulan di Editor (Warna Merah & Hijau)
     private void OnDrawGizmosSelected()
     {
         if (groundCheck != null)
