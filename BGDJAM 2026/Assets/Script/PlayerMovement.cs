@@ -6,7 +6,7 @@ public class PlayerRunner : MonoBehaviour
     [Header("Pengaturan Gerakan (Auto-Run)")]
     public float baseSpeed = 10f;
     private float currentSpeed;
-    private int moveDirection = 1; // 1 = Kanan, -1 = Kiri
+    private int moveDirection = 1;
 
     [Header("Pengaturan Lompat")]
     public float highJumpForce = 16f;
@@ -14,6 +14,10 @@ public class PlayerRunner : MonoBehaviour
     public float trampolineJumpForce = 20f;
     private bool isGrounded;
     private bool canAirJump;
+    
+    // ANTI-NYANGKUT & ANTI-LOMPAT DOUBLE
+    private float jumpLockTimer; 
+    private const float JUMP_LOCK_DURATION = 0.2f; // Kunci lompat selama 0.2 detik setelah balik badan
 
     [Header("Deteksi Lantai")]
     public Transform groundCheck;
@@ -31,47 +35,51 @@ public class PlayerRunner : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         currentSpeed = baseSpeed;
-        
-        // Gravitasi tinggi agar game terasa snappy (tidak melayang)
         rb.gravityScale = 3.5f; 
-        
-        // Pastikan rotasi Z terkunci agar player tidak terguling saat nabrak
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
 
     void Update()
     {
         CheckGrounded();
+        
+        // Kurangi timer setiap frame
+        if (jumpLockTimer > 0) jumpLockTimer -= Time.deltaTime;
+
         HandleJump();
         HandleAttack();
     }
 
     void FixedUpdate()
     {
-        // Gerak otomatis konstan
         rb.linearVelocity = new Vector2(moveDirection * currentSpeed, rb.linearVelocity.y);
     }
 
     void HandleJump()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        // Tambahan syarat: jumpLockTimer harus <= 0 agar bisa loncat
+        if (Input.GetKeyDown(KeyCode.Space) && jumpLockTimer <= 0)
         {
             if (isGrounded)
             {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
+                Jump();
             }
             else if (canAirJump)
             {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
+                Jump();
                 canAirJump = false; 
             }
         }
 
-        // Variabel Jump (Tap vs Hold)
         if (Input.GetKeyUp(KeyCode.Space) && rb.linearVelocity.y > 0)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * tapJumpMultiplier);
         }
+    }
+
+    void Jump()
+    {
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
     }
 
     void HandleAttack()
@@ -79,55 +87,43 @@ public class PlayerRunner : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Z))
         {
             Collider2D[] hitObjects = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, destructibleLayer);
-
             foreach (Collider2D obj in hitObjects)
             {
-                if (obj.CompareTag("Bel"))
-                {
-                    canAirJump = true; 
-                    Debug.Log("Bel dipukul! Air Jump aktif.");
-                }
-                
+                if (obj.CompareTag("Bel")) canAirJump = true; 
                 Destroy(obj.gameObject);
+            }
+        }
+    }
+
+    // Menggunakan OnCollisionStay2D agar lebih "galak" deteksi temboknya jika nyangkut
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Trampolin")) return;
+
+        bool isObstacle = ((1 << collision.gameObject.layer) & destructibleLayer) != 0 || 
+                           collision.gameObject.CompareTag("Halangan");
+
+        if (isObstacle)
+        {
+            foreach (ContactPoint2D contact in collision.contacts)
+            {
+                // Cek apakah tembok ada di depan arah lari
+                float collisionDot = Vector2.Dot(contact.normal, new Vector2(moveDirection, 0));
+
+                if (collisionDot < -0.5f) 
+                {
+                    TurnAround();
+                    break;
+                }
             }
         }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        // 1. Cek Trampolin (Prioritas utama)
         if (collision.gameObject.CompareTag("Trampolin"))
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, trampolineJumpForce);
-            return;
-        }
-
-        // 2. Cek Tabrakan Tembok (Layer Destructible atau Tag Halangan)
-        bool isObstacle = ((1 << collision.gameObject.layer) & destructibleLayer) != 0 || 
-                           collision.gameObject.CompareTag("Halangan");
-
-        if (isObstacle)
-        {
-            ContactPoint2D contact = collision.contacts[0];
-            
-            // Logika Dot Product: 
-            // Jika kita bergerak ke kanan (1,0) dan normal tembok ke kiri (-1,0), 
-            // hasilnya adalah -1 (Tabrakan depan sempurna).
-            float collisionDot = Vector2.Dot(contact.normal, new Vector2(moveDirection, 0));
-
-            if (collisionDot < -0.5f) 
-            {
-                TurnAround();
-            }
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Kopi"))
-        {
-            currentSpeed *= 1.5f; 
-            Destroy(collision.gameObject); 
         }
     }
 
@@ -135,36 +131,26 @@ public class PlayerRunner : MonoBehaviour
     {
         moveDirection *= -1;
         
+        // Reset lari dan kunci lompatan sebentar
+        jumpLockTimer = JUMP_LOCK_DURATION; 
+
         // Balik visual
         Vector3 localScale = transform.localScale;
         localScale.x = Mathf.Abs(localScale.x) * moveDirection;
         transform.localScale = localScale;
 
-        // Sedikit dorongan (offset) agar tidak overlap dengan collider tembok setelah putar balik
-        rb.position += new Vector2(moveDirection * 0.15f, 0);
+        // Paksa geser sedikit agar collider tidak tumpang tindih (cegah nyangkut)
+        rb.position += new Vector2(moveDirection * 0.2f, 0);
         
-        Debug.Log("Mantul! Arah sekarang: " + (moveDirection == 1 ? "Kanan" : "Kiri"));
+        // Hentikan momentum Y sebentar agar tidak "loncat" karena gesekan
+        rb.linearVelocity = new Vector2(moveDirection * currentSpeed, 0);
+
+        Debug.Log("Balik arah! Input lompat dikunci sebentar.");
     }
 
     void CheckGrounded()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-        
-        // Reset air jump jika menyentuh tanah (opsional, tergantung desain game kamu)
-        if (isGrounded) canAirJump = false;
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        if (groundCheck != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
-        }
-        if (attackPoint != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
-        }
+        if (isGrounded && rb.linearVelocity.y <= 0.1f) canAirJump = false;
     }
 }
