@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7ffc8029b974ad488843c3bf2af7f42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waktuTersisa: 10
+  waktuTersisa: 11
   timerBerjalan: 0
   teksTimer: {fileID: 9026212034632126970}
 --- !u!1 &2989533958264393065

@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.SceneManagement; // Tambahkan ini untuk pindah scene
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerRunner : MonoBehaviour
@@ -103,11 +105,10 @@ public class PlayerRunner : MonoBehaviour
         // 1. Logika KHUSUS Trampolin
         if (hitObj.CompareTag("Trampolin"))
         {
-            // Normal.y > 0.5 berarti permukaan yang ditabrak menghadap ke atas (diinjak)
             if (contact.normal.y > 0.5f)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, trampolineJumpForce);
-                return; // Keluar agar tidak memicu TurnAround jika mendarat di atasnya
+                return; 
             }
         }
 
@@ -117,7 +118,6 @@ public class PlayerRunner : MonoBehaviour
 
         if (isWall || isObstacle)
         {
-            // Cek apakah tabrakan terjadi dari arah depan player
             float collisionDot = Vector2.Dot(contact.normal, new Vector2(moveDirection, 0));
 
             if (collisionDot < -0.5f) 
@@ -127,40 +127,70 @@ public class PlayerRunner : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Kopi"))
         {
             currentSpeed *= 1.5f; 
             Destroy(collision.gameObject); 
         }
+
+        // MODIFIKASI: Panggil Coroutine untuk memberi jeda
+        if (collision.CompareTag("Dosen"))
+        {
+            StartCoroutine(WaitAndNextLevel(1.5f)); // Angka 1.5f adalah durasi jeda dalam detik
+        }
+    }
+
+    // FUNGSI BARU: Coroutine untuk menunggu sebelum pindah scene
+    IEnumerator WaitAndNextLevel(float delay)
+{
+    currentSpeed = 0;
+    rb.linearVelocity = Vector2.zero;
+
+    // Cari script TimerScript di dalam game dan hentikan jalannya
+    TimerScript objekTimer = FindFirstObjectByType<TimerScript>();
+    if (objekTimer != null)
+    {
+        objekTimer.timerBerjalan = false;
+    }
+
+    yield return new WaitForSeconds(delay);
+    NextLevel();
+}
+    void NextLevel()
+    {
+        // Mengambil index scene sekarang dan ditambah 1
+        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
+
+        // Pastikan scene berikutnya terdaftar di Build Settings
+        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            SceneManager.LoadScene(nextSceneIndex);
+        }
+        else
+        {
+            Debug.Log("Selamat! Ini adalah level terakhir.");
+            // Kamu bisa tambahkan load scene "Main Menu" atau "End Credits" di sini
+        }
     }
 
     void TurnAround()
     {
         moveDirection *= -1;
-        
-        // Balik visual karakter
         Vector3 localScale = transform.localScale;
         localScale.x = Mathf.Abs(localScale.x) * moveDirection;
         transform.localScale = localScale;
-
-        // Offset sedikit agar tidak overlap dengan collider dinding
         rb.position += new Vector2(moveDirection * 0.1f, 0);
     }
 
     void CheckGrounded()
     {
-        // Deteksi apakah player di tanah
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-        
-        // CATATAN: canAirJump TIDAK di-reset di sini agar bonus Bel tetap tersimpan 
-        // sampai benar-benar digunakan di udara dalam HandleJump().
     }
 
     private void OnDrawGizmosSelected()
     {
-        // Visualisasi radius di Scene View
         if (groundCheck != null)
         {
             Gizmos.color = Color.red;
