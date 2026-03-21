@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      BG Jendela 2_2_0: -8839821168467248869
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

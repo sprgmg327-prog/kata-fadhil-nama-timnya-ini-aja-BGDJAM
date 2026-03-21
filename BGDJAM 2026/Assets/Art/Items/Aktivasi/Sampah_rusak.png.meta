@@ -159,7 +159,9 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Sampah_rusak_0: 3224830909673291672
+      Sampah_rusak_1: -9058231444734928842
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
