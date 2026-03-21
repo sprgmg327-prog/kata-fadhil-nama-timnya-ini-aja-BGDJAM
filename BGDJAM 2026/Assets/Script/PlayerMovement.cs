@@ -73,7 +73,7 @@ public class PlayerRunner : MonoBehaviour
 
     void HandleAttack()
     {
-        if (Input.GetKeyDown(KeyCode.Z))
+        if (Input.GetKeyDown(KeyCode.F))
         {
             Collider2D[] hitObjects = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, destructibleLayer);
 
