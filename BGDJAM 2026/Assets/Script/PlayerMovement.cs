@@ -46,6 +46,7 @@ public class PlayerRunner : MonoBehaviour
 
     void FixedUpdate()
     {
+        // Gerak lari otomatis
         rb.linearVelocity = new Vector2(moveDirection * currentSpeed, rb.linearVelocity.y);
     }
 
@@ -61,7 +62,6 @@ public class PlayerRunner : MonoBehaviour
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
                 canAirJump = false; 
-                Debug.Log("Air Jump digunakan!");
             }
         }
 
@@ -79,24 +79,17 @@ public class PlayerRunner : MonoBehaviour
 
             foreach (Collider2D obj in hitObjects)
             {
-                // Ambil script ganti state
-                ItemStateChanger stateChanger = obj.GetComponent<ItemStateChanger>();
-
-                if (stateChanger != null)
+                ItemStateChanger state = obj.GetComponent<ItemStateChanger>();
+                
+                // Cek apakah item bisa dipukul dan belum pernah ditrigger
+                if (state != null && state.BisaDiinteraksi())
                 {
-                    stateChanger.AktifkanPerubahan();
+                    state.AktifkanPerubahan();
                     
-                    // Logika khusus jika itu Bel
                     if (obj.CompareTag("Bel"))
                     {
                         canAirJump = true;
-                        Debug.Log("Bel dipukul! Air Jump aktif.");
                     }
-                }
-                else
-                {
-                    // Jika tidak ada script ganti state, hancurkan saja (fallback)
-                    Destroy(obj.gameObject);
                 }
             }
         }
@@ -107,39 +100,35 @@ public class PlayerRunner : MonoBehaviour
         GameObject hitObj = collision.gameObject;
         ContactPoint2D contact = collision.contacts[0];
 
-        if (hitObj.CompareTag("Trampolin"))
+        if (hitObj.CompareTag("Trampolin") && contact.normal.y > 0.5f)
         {
-            if (contact.normal.y > 0.5f)
-            {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, trampolineJumpForce);
-                return; 
-            }
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, trampolineJumpForce);
+            return; 
         }
 
+        // Balik arah jika menabrak dinding
         bool isWall = ((1 << hitObj.layer) & destructibleLayer) != 0;
         bool isObstacle = hitObj.CompareTag("Halangan") || hitObj.CompareTag("Trampolin");
 
         if (isWall || isObstacle)
         {
             float collisionDot = Vector2.Dot(contact.normal, new Vector2(moveDirection, 0));
-            if (collisionDot < -0.5f) 
-            {
-                TurnAround();
-            }
+            if (collisionDot < -0.5f) TurnAround();
         }
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Logika Kopi (Ditabrak, Ganti Art + Suara, Kecepatan nambah, GAK ILANG)
+        // Efek Kopi: Nambah Speed 1.5x & Ganti Art (Sekali Saja)
         if (collision.CompareTag("Kopi"))
         {
-            currentSpeed *= 1.2f; // Nambah speed dikit
+            ItemStateChanger state = collision.GetComponent<ItemStateChanger>();
             
-            ItemStateChanger stateChanger = collision.GetComponent<ItemStateChanger>();
-            if (stateChanger != null)
+            if (state != null && state.BisaDiinteraksi())
             {
-                stateChanger.AktifkanPerubahan();
+                currentSpeed *= 1.5f; 
+                state.AktifkanPerubahan();
+                Debug.Log("Speed naik! Sekarang: " + currentSpeed);
             }
         }
 
@@ -149,31 +138,26 @@ public class PlayerRunner : MonoBehaviour
         }
     }
 
+    // --- Fungsi Helper ---
+
     IEnumerator WaitAndNextLevel(float delay)
     {
         currentSpeed = 0;
         rb.linearVelocity = Vector2.zero;
-
-        TimerScript objekTimer = FindFirstObjectByType<TimerScript>();
-        if (objekTimer != null) objekTimer.timerBerjalan = false;
+        TimerScript timer = FindFirstObjectByType<TimerScript>();
+        if (timer != null) timer.timerBerjalan = false;
 
         yield return new WaitForSeconds(delay);
-        NextLevel();
-    }
-
-    void NextLevel()
-    {
-        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
-        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
-            SceneManager.LoadScene(nextSceneIndex);
+        int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
+        if (nextIndex < SceneManager.sceneCountInBuildSettings) SceneManager.LoadScene(nextIndex);
     }
 
     void TurnAround()
     {
         moveDirection *= -1;
-        Vector3 localScale = transform.localScale;
-        localScale.x = Mathf.Abs(localScale.x) * moveDirection;
-        transform.localScale = localScale;
+        Vector3 scale = transform.localScale;
+        scale.x = Mathf.Abs(scale.x) * moveDirection;
+        transform.localScale = scale;
     }
 
     void CheckGrounded()
@@ -183,15 +167,7 @@ public class PlayerRunner : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        if (groundCheck != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
-        }
-        if (attackPoint != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
-        }
+        if (groundCheck != null) Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        if (attackPoint != null) Gizmos.DrawWireSphere(attackPoint.position, attackRange);
     }
 }
