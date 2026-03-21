@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Tambahkan ini untuk pindah scene
+using UnityEngine.SceneManagement;
 using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -8,14 +8,14 @@ public class PlayerRunner : MonoBehaviour
     [Header("Pengaturan Gerakan (Auto-Run)")]
     public float baseSpeed = 10f;
     private float currentSpeed;
-    private int moveDirection = 1; // 1 = Kanan, -1 = Kiri
+    private int moveDirection = 1; 
 
     [Header("Pengaturan Lompat")]
     public float highJumpForce = 16f;
     public float tapJumpMultiplier = 0.5f;
     public float trampolineJumpForce = 20f;
     private bool isGrounded;
-    private bool canAirJump; // Bonus jump dari Bel
+    private bool canAirJump; 
 
     [Header("Deteksi Lantai")]
     public Transform groundCheck;
@@ -33,7 +33,6 @@ public class PlayerRunner : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         currentSpeed = baseSpeed;
-        
         rb.gravityScale = 3.5f; 
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
@@ -47,30 +46,25 @@ public class PlayerRunner : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Gerak otomatis horizontal konstan
         rb.linearVelocity = new Vector2(moveDirection * currentSpeed, rb.linearVelocity.y);
     }
 
     void HandleJump()
     {
-        // Logika Lompat
         if (Input.GetKeyDown(KeyCode.Space))
         {
             if (isGrounded)
             {
-                // Lompat normal dari tanah
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
             }
             else if (canAirJump)
             {
-                // Double Jump (hanya jika sudah pukul Bel)
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
-                canAirJump = false; // Reset bonus setelah digunakan di udara
+                canAirJump = false; 
                 Debug.Log("Air Jump digunakan!");
             }
         }
 
-        // Variabel Jump (Tap vs Hold) - Memotong kecepatan Y jika tombol dilepas
         if (Input.GetKeyUp(KeyCode.Space) && rb.linearVelocity.y > 0)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * tapJumpMultiplier);
@@ -81,18 +75,29 @@ public class PlayerRunner : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            // Deteksi objek di sekitar attack point
             Collider2D[] hitObjects = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, destructibleLayer);
 
             foreach (Collider2D obj in hitObjects)
             {
-                if (obj.CompareTag("Bel"))
+                // Ambil script ganti state
+                ItemStateChanger stateChanger = obj.GetComponent<ItemStateChanger>();
+
+                if (stateChanger != null)
                 {
-                    canAirJump = true; // Aktifkan bonus double jump
-                    Debug.Log("Bel hancur! Bonus Air Jump aktif.");
+                    stateChanger.AktifkanPerubahan();
+                    
+                    // Logika khusus jika itu Bel
+                    if (obj.CompareTag("Bel"))
+                    {
+                        canAirJump = true;
+                        Debug.Log("Bel dipukul! Air Jump aktif.");
+                    }
                 }
-                
-                Destroy(obj.gameObject);
+                else
+                {
+                    // Jika tidak ada script ganti state, hancurkan saja (fallback)
+                    Destroy(obj.gameObject);
+                }
             }
         }
     }
@@ -102,7 +107,6 @@ public class PlayerRunner : MonoBehaviour
         GameObject hitObj = collision.gameObject;
         ContactPoint2D contact = collision.contacts[0];
 
-        // 1. Logika KHUSUS Trampolin
         if (hitObj.CompareTag("Trampolin"))
         {
             if (contact.normal.y > 0.5f)
@@ -112,14 +116,12 @@ public class PlayerRunner : MonoBehaviour
             }
         }
 
-        // 2. Logika TABRAKAN SAMPING (Balik Arah)
         bool isWall = ((1 << hitObj.layer) & destructibleLayer) != 0;
         bool isObstacle = hitObj.CompareTag("Halangan") || hitObj.CompareTag("Trampolin");
 
         if (isWall || isObstacle)
         {
             float collisionDot = Vector2.Dot(contact.normal, new Vector2(moveDirection, 0));
-
             if (collisionDot < -0.5f) 
             {
                 TurnAround();
@@ -127,52 +129,43 @@ public class PlayerRunner : MonoBehaviour
         }
     }
 
-private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
+        // Logika Kopi (Ditabrak, Ganti Art + Suara, Kecepatan nambah, GAK ILANG)
         if (collision.CompareTag("Kopi"))
         {
-            currentSpeed *= 1.5f; 
-            Destroy(collision.gameObject); 
+            currentSpeed *= 1.2f; // Nambah speed dikit
+            
+            ItemStateChanger stateChanger = collision.GetComponent<ItemStateChanger>();
+            if (stateChanger != null)
+            {
+                stateChanger.AktifkanPerubahan();
+            }
         }
 
-        // MODIFIKASI: Panggil Coroutine untuk memberi jeda
         if (collision.CompareTag("Dosen"))
         {
-            StartCoroutine(WaitAndNextLevel(1.5f)); // Angka 1.5f adalah durasi jeda dalam detik
+            StartCoroutine(WaitAndNextLevel(1.5f)); 
         }
     }
 
-    // FUNGSI BARU: Coroutine untuk menunggu sebelum pindah scene
     IEnumerator WaitAndNextLevel(float delay)
-{
-    currentSpeed = 0;
-    rb.linearVelocity = Vector2.zero;
-
-    // Cari script TimerScript di dalam game dan hentikan jalannya
-    TimerScript objekTimer = FindFirstObjectByType<TimerScript>();
-    if (objekTimer != null)
     {
-        objekTimer.timerBerjalan = false;
+        currentSpeed = 0;
+        rb.linearVelocity = Vector2.zero;
+
+        TimerScript objekTimer = FindFirstObjectByType<TimerScript>();
+        if (objekTimer != null) objekTimer.timerBerjalan = false;
+
+        yield return new WaitForSeconds(delay);
+        NextLevel();
     }
 
-    yield return new WaitForSeconds(delay);
-    NextLevel();
-}
     void NextLevel()
     {
-        // Mengambil index scene sekarang dan ditambah 1
         int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
-
-        // Pastikan scene berikutnya terdaftar di Build Settings
         if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
-        {
             SceneManager.LoadScene(nextSceneIndex);
-        }
-        else
-        {
-            Debug.Log("Selamat! Ini adalah level terakhir.");
-            // Kamu bisa tambahkan load scene "Main Menu" atau "End Credits" di sini
-        }
     }
 
     void TurnAround()
@@ -181,7 +174,6 @@ private void OnTriggerEnter2D(Collider2D collision)
         Vector3 localScale = transform.localScale;
         localScale.x = Mathf.Abs(localScale.x) * moveDirection;
         transform.localScale = localScale;
-        rb.position += new Vector2(moveDirection * 0.1f, 0);
     }
 
     void CheckGrounded()
