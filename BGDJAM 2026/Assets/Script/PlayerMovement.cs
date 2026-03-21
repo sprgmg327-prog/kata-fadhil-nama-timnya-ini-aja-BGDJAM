@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.SceneManagement; // Tambahkan ini untuk pindah scene
+using UnityEngine.SceneManagement;
 using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -8,14 +8,14 @@ public class PlayerRunner : MonoBehaviour
     [Header("Pengaturan Gerakan (Auto-Run)")]
     public float baseSpeed = 10f;
     private float currentSpeed;
-    private int moveDirection = 1; // 1 = Kanan, -1 = Kiri
+    private int moveDirection = 1; 
 
     [Header("Pengaturan Lompat")]
     public float highJumpForce = 16f;
     public float tapJumpMultiplier = 0.5f;
     public float trampolineJumpForce = 20f;
     private bool isGrounded;
-    private bool canAirJump; // Bonus jump dari Bel
+    private bool canAirJump; 
 
     [Header("Deteksi Lantai")]
     public Transform groundCheck;
@@ -33,7 +33,6 @@ public class PlayerRunner : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         currentSpeed = baseSpeed;
-        
         rb.gravityScale = 3.5f; 
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
@@ -47,30 +46,25 @@ public class PlayerRunner : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Gerak otomatis horizontal konstan
+        // Gerak lari otomatis
         rb.linearVelocity = new Vector2(moveDirection * currentSpeed, rb.linearVelocity.y);
     }
 
     void HandleJump()
     {
-        // Logika Lompat
         if (Input.GetKeyDown(KeyCode.Space))
         {
             if (isGrounded)
             {
-                // Lompat normal dari tanah
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
             }
             else if (canAirJump)
             {
-                // Double Jump (hanya jika sudah pukul Bel)
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
-                canAirJump = false; // Reset bonus setelah digunakan di udara
-                Debug.Log("Air Jump digunakan!");
+                canAirJump = false; 
             }
         }
 
-        // Variabel Jump (Tap vs Hold) - Memotong kecepatan Y jika tombol dilepas
         if (Input.GetKeyUp(KeyCode.Space) && rb.linearVelocity.y > 0)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, rb.linearVelocity.y * tapJumpMultiplier);
@@ -81,18 +75,22 @@ public class PlayerRunner : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            // Deteksi objek di sekitar attack point
             Collider2D[] hitObjects = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, destructibleLayer);
 
             foreach (Collider2D obj in hitObjects)
             {
-                if (obj.CompareTag("Bel"))
-                {
-                    canAirJump = true; // Aktifkan bonus double jump
-                    Debug.Log("Bel hancur! Bonus Air Jump aktif.");
-                }
+                ItemStateChanger state = obj.GetComponent<ItemStateChanger>();
                 
-                Destroy(obj.gameObject);
+                // Cek apakah item bisa dipukul dan belum pernah ditrigger
+                if (state != null && state.BisaDiinteraksi())
+                {
+                    state.AktifkanPerubahan();
+                    
+                    if (obj.CompareTag("Bel"))
+                    {
+                        canAirJump = true;
+                    }
+                }
             }
         }
     }
@@ -102,86 +100,64 @@ public class PlayerRunner : MonoBehaviour
         GameObject hitObj = collision.gameObject;
         ContactPoint2D contact = collision.contacts[0];
 
-        // 1. Logika KHUSUS Trampolin
-        if (hitObj.CompareTag("Trampolin"))
+        if (hitObj.CompareTag("Trampolin") && contact.normal.y > 0.5f)
         {
-            if (contact.normal.y > 0.5f)
-            {
-                rb.linearVelocity = new Vector2(rb.linearVelocity.x, trampolineJumpForce);
-                return; 
-            }
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, trampolineJumpForce);
+            return; 
         }
 
-        // 2. Logika TABRAKAN SAMPING (Balik Arah)
+        // Balik arah jika menabrak dinding
         bool isWall = ((1 << hitObj.layer) & destructibleLayer) != 0;
         bool isObstacle = hitObj.CompareTag("Halangan") || hitObj.CompareTag("Trampolin");
 
         if (isWall || isObstacle)
         {
             float collisionDot = Vector2.Dot(contact.normal, new Vector2(moveDirection, 0));
-
-            if (collisionDot < -0.5f) 
-            {
-                TurnAround();
-            }
+            if (collisionDot < -0.5f) TurnAround();
         }
     }
 
-private void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
+        // Efek Kopi: Nambah Speed 1.5x & Ganti Art (Sekali Saja)
         if (collision.CompareTag("Kopi"))
         {
-            currentSpeed *= 1.5f; 
-            Destroy(collision.gameObject); 
+            ItemStateChanger state = collision.GetComponent<ItemStateChanger>();
+            
+            if (state != null && state.BisaDiinteraksi())
+            {
+                currentSpeed *= 1.5f; 
+                state.AktifkanPerubahan();
+                Debug.Log("Speed naik! Sekarang: " + currentSpeed);
+            }
         }
 
-        // MODIFIKASI: Panggil Coroutine untuk memberi jeda
         if (collision.CompareTag("Dosen"))
         {
-            StartCoroutine(WaitAndNextLevel(1.5f)); // Angka 1.5f adalah durasi jeda dalam detik
+            StartCoroutine(WaitAndNextLevel(1.5f)); 
         }
     }
 
-    // FUNGSI BARU: Coroutine untuk menunggu sebelum pindah scene
+    // --- Fungsi Helper ---
+
     IEnumerator WaitAndNextLevel(float delay)
-{
-    currentSpeed = 0;
-    rb.linearVelocity = Vector2.zero;
-
-    // Cari script TimerScript di dalam game dan hentikan jalannya
-    TimerScript objekTimer = FindFirstObjectByType<TimerScript>();
-    if (objekTimer != null)
     {
-        objekTimer.timerBerjalan = false;
-    }
+        currentSpeed = 0;
+        rb.linearVelocity = Vector2.zero;
+        TimerScript timer = FindFirstObjectByType<TimerScript>();
+        if (timer != null) timer.timerBerjalan = false;
 
-    yield return new WaitForSeconds(delay);
-    NextLevel();
-}
-    void NextLevel()
-    {
-        // Mengambil index scene sekarang dan ditambah 1
-        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
-
-        // Pastikan scene berikutnya terdaftar di Build Settings
-        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
-        {
-            SceneManager.LoadScene(nextSceneIndex);
-        }
-        else
-        {
-            Debug.Log("Selamat! Ini adalah level terakhir.");
-            // Kamu bisa tambahkan load scene "Main Menu" atau "End Credits" di sini
-        }
+        yield return new WaitForSeconds(delay);
+        int nextIndex = SceneManager.GetActiveScene().buildIndex + 1;
+        if (nextIndex < SceneManager.sceneCountInBuildSettings) SceneManager.LoadScene(nextIndex);
     }
 
     void TurnAround()
     {
         moveDirection *= -1;
-        Vector3 localScale = transform.localScale;
-        localScale.x = Mathf.Abs(localScale.x) * moveDirection;
-        transform.localScale = localScale;
-        rb.position += new Vector2(moveDirection * 0.1f, 0);
+        Vector3 scale = transform.localScale;
+        scale.x = Mathf.Abs(scale.x) * moveDirection;
+        transform.localScale = scale;
     }
 
     void CheckGrounded()
@@ -191,15 +167,7 @@ private void OnTriggerEnter2D(Collider2D collision)
 
     private void OnDrawGizmosSelected()
     {
-        if (groundCheck != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
-        }
-        if (attackPoint != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
-        }
+        if (groundCheck != null) Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        if (attackPoint != null) Gizmos.DrawWireSphere(attackPoint.position, attackRange);
     }
 }

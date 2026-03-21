@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 193310695545454163}
   - component: {fileID: 1015633563041638415}
   - component: {fileID: 5146936852746903252}
+  - component: {fileID: 3289411478589653273}
   m_Layer: 0
   m_Name: 'Coffe Machine '
   m_TagString: Kopi
@@ -76,7 +77,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 10
+  m_SortingOrder: 9
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
   m_Color: {r: 0.053399645, g: 0.6792453, b: 0.6684106, a: 1}
   m_FlipX: 0
@@ -134,3 +135,17 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &3289411478589653273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6714615196095640150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bdce2c44f5b0f6f4bba6c8570abcf6ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spriteSetelahInteraksi: {fileID: 7482667652216324306, guid: c80e39fdf3cdf6f44b1199a319629370, type: 3}
+  suaraInteraksi: {fileID: 0}
