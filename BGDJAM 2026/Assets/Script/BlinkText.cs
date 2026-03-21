@@ -1,27 +1,33 @@
 using UnityEngine;
-using TMPro; // Gunakan ini jika pakai TextMeshPro
-using UnityEngine.UI; // Gunakan ini jika pakai Text UI standar
+using System.Collections; // <--- WAJIB ADA BARIS INI
+using TMPro;
 
 public class BlinkText : MonoBehaviour
 {
-    [Tooltip("Kecepatan kedip dalam detik")]
-    public float interval = 0.5f; 
+    public float interval = 0.5f;
+    private CanvasGroup cg;
 
-    private GameObject visualText;
-
-    void Start()
+    void Awake()
     {
-        // Menyimpan referensi ke objek ini sendiri
-        visualText = this.gameObject;
-
-        // Menjalankan fungsi ToggleText secara berulang
-        // 0 = mulai sekarang, interval = diulang setiap X detik
-        InvokeRepeating("ToggleText", 0, interval);
+        // Menggunakan CanvasGroup agar kedipan lebih stabil
+        cg = GetComponent<CanvasGroup>();
+        if (cg == null) cg = gameObject.AddComponent<CanvasGroup>();
     }
 
-    void ToggleText()
+    // Fungsi ini akan jalan otomatis saat IntroCutscene memanggil SetActive(true)
+    void OnEnable() 
     {
-        // Membalikkan status aktif objek (Jika aktif jadi mati, jika mati jadi aktif)
-        visualText.SetActive(!visualText.activeSelf);
+        StartCoroutine(DoBlink());
+    }
+
+    // Fungsi IEnumerator untuk logika kedip
+    IEnumerator DoBlink()
+    {
+        while (true)
+        {
+            // Jika alpha 0 jadi 1, jika 1 jadi 0
+            cg.alpha = (cg.alpha == 0) ? 1 : 0;
+            yield return new WaitForSeconds(interval);
+        }
     }
 }

@@ -5,9 +5,12 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Eksperimen (Raihan).unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Scenes/Cutscene Awal.unity
+    guid: 1b635f672914dcd41ab59a55f8c6af8a
   - enabled: 1
     path: Assets/Scenes/LVL 1.unity
     guid: 393d95af11b3bad478220f39137e3e89

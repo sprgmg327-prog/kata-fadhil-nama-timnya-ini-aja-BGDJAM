@@ -8,32 +8,41 @@ public class IntroCutscene : MonoBehaviour
 {
     [Header("Urutan Gambar")]
     public List<Image> daftarGambar; 
-    public float jedaMuncul = 0.8f; // Kecepatan muncul gambar (0.8 detik)
+    
+    [Tooltip("Waktu diam setelah satu gambar selesai muncul sebelum lanjut ke gambar berikutnya.")]
+    public float jedaAntarGambar = 1.5f; 
+    
+    [Tooltip("Seberapa lambat gambar memudar dari transparan ke jelas.")]
+    public float durasiFade = 2.0f;     
 
     [Header("UI Tambahan")]
-    public GameObject teksPetunjuk; // Objek teks "Press ENTER to Start"
-    public string namaSceneTujuan = "Level1";
+    public GameObject teksPetunjuk; 
 
     private bool siapPindah = false;
     private bool sedangProses = false;
 
     void Start()
     {
-        // Setup awal: Sembunyikan semua gambar & teks petunjuk
+        // 1. Persiapan Awal
         foreach (Image img in daftarGambar)
         {
-            img.enabled = false;
+            // Set semua gambar jadi transparan di awal
+            Color c = img.color;
+            c.a = 0;
+            img.color = c;
+            img.enabled = true; 
         }
 
+        // Pastikan teks "Press ENTER" mati di awal
         if (teksPetunjuk != null) teksPetunjuk.SetActive(false);
 
-        // Mulai urutan muncul gambar
+        // 2. Mulai urutan animasi
         StartCoroutine(SequenceAnimasi());
     }
 
     void Update()
     {
-        // Cek input ENTER hanya jika semua gambar sudah muncul
+        // 3. Deteksi Input ENTER untuk pindah ke LVL 1
         if (siapPindah && !sedangProses)
         {
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
@@ -45,23 +54,58 @@ public class IntroCutscene : MonoBehaviour
 
     IEnumerator SequenceAnimasi()
     {
+        // Loop untuk memunculkan gambar satu per satu
         for (int i = 0; i < daftarGambar.Count; i++)
         {
-            yield return new WaitForSeconds(jedaMuncul);
-            daftarGambar[i].enabled = true;
+            // Munculkan gambar dengan efek Fade In dan TUNGGU sampai selesai
+            yield return StartCoroutine(FadeInImage(daftarGambar[i]));
             
-            // Efek suara muncul (opsional)
-            // AudioSource.PlayClipAtPoint(suaraMuncul, transform.position);
+            // Beri jeda diam sebentar agar pemain bisa melihat gambarnya
+            yield return new WaitForSeconds(jedaAntarGambar);
         }
 
-        // Setelah gambar terakhir muncul
+        // Setelah semua gambar muncul, tunggu 1 detik baru munculkan teks petunjuk
+        yield return new WaitForSeconds(1.0f);
+
         siapPindah = true;
-        if (teksPetunjuk != null) teksPetunjuk.SetActive(true);
+        if (teksPetunjuk != null) 
+        {
+            teksPetunjuk.SetActive(true);
+        }
+    }
+
+    // Fungsi internal untuk memproses pemudaran (Fade)
+    IEnumerator FadeInImage(Image img)
+    {
+        float counter = 0;
+        while (counter < durasiFade)
+        {
+            counter += Time.deltaTime;
+            float alpha = Mathf.Lerp(0, 1, counter / durasiFade);
+            
+            Color c = img.color;
+            c.a = alpha;
+            img.color = c;
+            
+            yield return null; // Tunggu ke frame berikutnya
+        }
     }
 
     void MulaiGame()
     {
         sedangProses = true;
-        SceneManager.LoadScene("LVL 1");
+        
+        // Pindah ke scene berikutnya sesuai urutan di Build Settings (Index 1)
+        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
+        
+        // Cek dulu apakah scene berikutnya ada, kalau ada baru pindah
+        if (nextSceneIndex < SceneManager.sceneCountInBuildSettings)
+        {
+            SceneManager.LoadScene(nextSceneIndex);
+        }
+        else
+        {
+            Debug.LogError("Scene berikutnya tidak ditemukan di Build Settings!");
+        }
     }
 }
