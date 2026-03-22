@@ -400,7 +400,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Tekan ENTER untuk Mulai
+  m_text: 'Press ENTER to Start
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 002b9deb66cb7ad43b739b801805812e, type: 2}
   m_sharedMaterial: {fileID: -6298297007013103775, guid: 002b9deb66cb7ad43b739b801805812e, type: 2}
@@ -495,7 +497,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 1484, y: -840.51}
+  m_AnchoredPosition: {x: 1612, y: -840.51}
   m_SizeDelta: {x: 760.1035, y: 78.977}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &660538648

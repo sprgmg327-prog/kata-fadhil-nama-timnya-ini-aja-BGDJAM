@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Countdown_10_0: 617442365114365618
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

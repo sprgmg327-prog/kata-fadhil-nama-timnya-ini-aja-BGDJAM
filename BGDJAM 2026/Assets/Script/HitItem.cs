@@ -6,6 +6,10 @@ public class ItemStateChanger : MonoBehaviour
     [Header("Visual State (Sesudah)")]
     public Sprite spriteSetelahInteraksi; 
 
+    [Header("Animasi")]
+    [Tooltip("Nama parameter Trigger di Animator (Contoh: 'KenaPukul')")]
+    public string namaParameterAnimasi = "KenaPukul";
+
     [Header("Audio")]
     public AudioClip suaraInteraksi;
 
@@ -15,7 +19,8 @@ public class ItemStateChanger : MonoBehaviour
 
     private SpriteRenderer sr;
     private AudioSource audioSource;
-    private Collider2D col; // Referensi ke collider benda ini
+    private Collider2D col; 
+    private Animator anim; // Tambahan: Referensi Animator
     private bool sudahBerubah = false;
 
     public bool BisaDiinteraksi() => !sudahBerubah;
@@ -23,7 +28,8 @@ public class ItemStateChanger : MonoBehaviour
     void Awake()
     {
         sr = GetComponent<SpriteRenderer>();
-        col = GetComponent<Collider2D>(); // Mengambil collider (Box/Circle/Polygon)
+        col = GetComponent<Collider2D>(); 
+        anim = GetComponent<Animator>(); // Tambahan: Ambil komponen Animator jika ada
         
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
@@ -47,16 +53,18 @@ public class ItemStateChanger : MonoBehaviour
             audioSource.PlayOneShot(suaraInteraksi);
         }
 
-        // 3. LOGIKA TEMBUS: Matikan collider atau jadikan trigger
-        if (tembusSetelahInteraksi && col != null)
+        // 3. Mainkan Animasi (Tambahan Baru)
+        if (anim != null && !string.IsNullOrEmpty(namaParameterAnimasi))
         {
-            // Opsi paling aman: jadikan trigger agar tetap bisa dideteksi tapi tidak menghalangi jalan
-            col.isTrigger = true; 
-            
-            // Atau kalau mau benar-benar hilang fisikanya:
-            // col.enabled = false;
+            anim.SetTrigger(namaParameterAnimasi);
         }
 
-        Debug.Log(gameObject.name + " sekarang bisa ditembus!");
+        // 4. LOGIKA TEMBUS
+        if (tembusSetelahInteraksi && col != null)
+        {
+            col.isTrigger = true; 
+        }
+
+        Debug.Log(gameObject.name + " sekarang bisa ditembus dan animasi dimainkan!");
     }
 }
