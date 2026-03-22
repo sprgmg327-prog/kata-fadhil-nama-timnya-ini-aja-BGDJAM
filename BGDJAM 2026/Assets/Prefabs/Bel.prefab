@@ -127,7 +127,7 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.892, y: 0.829}
+    oldSize: {x: 1, y: 1}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -148,5 +148,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteSetelahInteraksi: {fileID: 2502830799235718479, guid: 2df15f4ac663a8f4ba4f68c1210b1ac5, type: 3}
-  suaraInteraksi: {fileID: 0}
+  suaraInteraksi: {fileID: 8300000, guid: 8f8232981ab8ad446b93ae22e6b584a4, type: 3}
   tembusSetelahInteraksi: 1

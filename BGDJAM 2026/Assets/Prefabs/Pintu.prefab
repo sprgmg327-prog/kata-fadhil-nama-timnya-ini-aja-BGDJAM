@@ -147,6 +147,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdce2c44f5b0f6f4bba6c8570abcf6ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spriteSetelahInteraksi: {fileID: 0}
-  suaraInteraksi: {fileID: 0}
+  spriteSetelahInteraksi: {fileID: -8294708678111372707, guid: c36d11f6041930d4c9a966dd78e77cb7, type: 3}
+  suaraInteraksi: {fileID: 8300000, guid: 6718569845fb24a49a95473aaf84be24, type: 3}
   tembusSetelahInteraksi: 1

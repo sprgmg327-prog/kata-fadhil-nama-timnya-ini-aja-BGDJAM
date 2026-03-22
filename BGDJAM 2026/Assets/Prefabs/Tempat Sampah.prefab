@@ -28,8 +28,8 @@ Transform:
   m_GameObject: {fileID: 4895498081475519714}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.78, y: -0.25, z: 0}
-  m_LocalScale: {x: 1, y: 1.5, z: 1}
+  m_LocalPosition: {x: 0.9899, y: -0.6336, z: 0}
+  m_LocalScale: {x: 2.049274, y: 2.0346065, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -78,7 +78,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 9
-  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Sprite: {fileID: -7875938725866612828, guid: b80bd5fce953e9544a38b175764ef5bd, type: 3}
   m_Color: {r: 0.3333333, g: 0.3333333, b: 0.3333333, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -123,17 +123,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.000000029802322, y: 0.07640568}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
+    pivot: {x: 0.4999999, y: 0.3666148}
+    oldSize: {x: 0.4, y: 0.6}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.41238016, y: 0.6137828}
   m_EdgeRadius: 0
 --- !u!114 &5733733352174409800
 MonoBehaviour:
@@ -147,6 +147,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdce2c44f5b0f6f4bba6c8570abcf6ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spriteSetelahInteraksi: {fileID: 7482667652216324306, guid: c80e39fdf3cdf6f44b1199a319629370, type: 3}
-  suaraInteraksi: {fileID: 0}
+  spriteSetelahInteraksi: {fileID: 3224830909673291672, guid: 94c67369b280b8d4c96812f3a3177b09, type: 3}
+  suaraInteraksi: {fileID: 8300000, guid: 48217b152a132674e936dff80aa467a1, type: 3}
   tembusSetelahInteraksi: 1

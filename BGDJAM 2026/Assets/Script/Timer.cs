@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro; 
-using UnityEngine.SceneManagement; // Tambahkan ini untuk mengatur Scene
+using UnityEngine.SceneManagement;
+using System.Collections; 
 
 public class TimerScript : MonoBehaviour
 {
@@ -8,16 +9,21 @@ public class TimerScript : MonoBehaviour
     public bool timerBerjalan = false;
     public TextMeshProUGUI teksTimer; 
 
+    [Header("Audio Settings")]
+    public AudioSource audioSource;    
+    public AudioClip restartSound;    // Suara ini hanya untuk waktu habis
+
     void Start()
     {
         timerBerjalan = true;
     }
 
-  void Update()
+    void Update()
     {
+        // 1. RESTART MANDIRI: Langsung pindah (Instan)
         if (Input.GetKeyDown(KeyCode.R))
         {
-            RestartLevel();
+            RestartLevelInstan();
         }
 
         if (timerBerjalan)
@@ -25,20 +31,17 @@ public class TimerScript : MonoBehaviour
             if (waktuTersisa > 0)
             {
                 waktuTersisa -= Time.deltaTime;
-                
-                // PERBAIKAN: Gunakan Mathf.Max agar angka tidak minus sebelum ditampilkan
                 UpdateTampilanWaktu(Mathf.Max(0, waktuTersisa));
             }
             else
             {
+                // 2. WAKTU HABIS: Panggil Coroutine dengan suara & delay
                 Debug.Log("Waktu Habis!");
                 waktuTersisa = 0;
                 timerBerjalan = false;
-                
-                // Update tampilan terakhir ke 00:00 sebelum restart
                 UpdateTampilanWaktu(0); 
 
-                RestartLevel();
+                StartCoroutine(PlaySoundAndRestart());
             }
         }
     }
@@ -50,10 +53,25 @@ public class TimerScript : MonoBehaviour
         teksTimer.text = string.Format("{0:00}:{1:00}", menit, detik);
     }
 
-    // Fungsi bantuan untuk memuat ulang scene yang sedang aktif
-    void RestartLevel()
+    // Fungsi untuk restart langsung (tanpa suara/delay)
+    void RestartLevelInstan()
     {
-        // Mengambil index scene yang aktif sekarang lalu memuatnya ulang
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    // Coroutine khusus saat waktu habis (dengan suara & delay)
+    IEnumerator PlaySoundAndRestart()
+    {
+        timerBerjalan = false;
+
+        if (audioSource != null && restartSound != null)
+        {
+            audioSource.PlayOneShot(restartSound);
+            
+            // Tunggu selama durasi suara agar tidak terpotong
+            yield return new WaitForSeconds(0.8f); 
+        }
+
+        RestartLevelInstan();
     }
 }
