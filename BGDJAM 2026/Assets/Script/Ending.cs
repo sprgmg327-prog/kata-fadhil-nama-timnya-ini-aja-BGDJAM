@@ -6,31 +6,28 @@ using System.Collections.Generic;
 
 public class EndGameCutsceneManager : MonoBehaviour
 {
-    [Header("Urutan Gambar (Wajib 12)")]
+    [Header("Urutan Gambar (Total 9)")]
     public List<Image> daftarGambar; 
     
     [Header("Pengaturan Waktu")]
     public float durasiFade = 1.0f;   
     public float jedaAntarGambar = 0.8f; 
-    [Tooltip("Waktu tunggu setelah 4 gambar ngumpul, sebelum layar dibersihkan buat 4 gambar berikutnya.")]
     public float jedaGantiHalaman = 2.5f; 
 
     [Header("UI Tambahan")]
     public GameObject teksPetunjuk; 
-    public string namaSceneMainMenu = "MainMenu"; 
 
     private bool siapPindah = false;
     private bool sedangProsesLoad = false;
 
     void Start()
     {
-        if (daftarGambar.Count != 12)
+        if (daftarGambar.Count != 9)
         {
-            Debug.LogError("Masukin 12 gambar dulu di Inspector ngab!");
+            Debug.LogError("Masukin tepat 9 gambar di Inspector, Boss!");
             return;
         }
 
-        // Set transparan semua di awal
         foreach (Image img in daftarGambar)
         {
             if (img != null)
@@ -43,19 +40,19 @@ public class EndGameCutsceneManager : MonoBehaviour
         }
 
         if (teksPetunjuk != null) teksPetunjuk.SetActive(false);
-
         StartCoroutine(SequenceAnimasiPage());
     }
 
     void Update()
     {
+        // Deteksi input Enter kalau cutscene sudah beres
         if (siapPindah && !sedangProsesLoad)
         {
-            // Kalau udah selesai semua, tekan Enter pindah scene
             if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
             {
                 sedangProsesLoad = true;
-                SceneManager.LoadScene(namaSceneMainMenu);
+                // Balik ke scene index 0
+                SceneManager.LoadScene(0);
             }
         }
     }
@@ -64,34 +61,25 @@ public class EndGameCutsceneManager : MonoBehaviour
     {
         for (int i = 0; i < daftarGambar.Count; i++)
         {
-            // 1. Munculin gambar ke-i
             yield return StartCoroutine(FadeInImage(daftarGambar[i]));
 
-            // 2. Cek apakah ini gambar ke-4, ke-8, atau ke-12 (index 3, 7, 11)
-            if ((i + 1) % 4 == 0)
+            if ((i + 1) % 4 == 0 && i != daftarGambar.Count - 1)
             {
-                // Kasih waktu agak lama biar pemain bisa baca/lihat 4 gambar yang udah kumpul
                 yield return new WaitForSeconds(jedaGantiHalaman);
-
-                // Kalau BUKAN gambar terakhir (ke-12), bersihkan layar untuk 4 gambar berikutnya
-                if (i != daftarGambar.Count - 1)
-                {
-                    ClearHalaman(i - 3, i); // Hapus 4 gambar barusan
-                    yield return new WaitForSeconds(0.5f); // Jeda bentar pas layar kosong
-                }
+                ClearHalaman(i - 3, i); 
+                yield return new WaitForSeconds(0.5f);
+            }
+            else if (i == daftarGambar.Count - 1)
+            {
+                yield return new WaitForSeconds(1.0f);
             }
             else
             {
-                // Kalau belum 4 gambar, kasih jeda biasa sebelum gambar selanjutnya muncul
                 yield return new WaitForSeconds(jedaAntarGambar);
             }
         }
 
-        // 3. Semua 12 gambar udah beres, munculin teks kedip
-        if (teksPetunjuk != null) 
-        {
-            teksPetunjuk.SetActive(true);
-        }
+        if (teksPetunjuk != null) teksPetunjuk.SetActive(true);
         siapPindah = true;
     }
 
@@ -108,7 +96,6 @@ public class EndGameCutsceneManager : MonoBehaviour
             img.color = c;
             yield return null; 
         }
-        // Pastikan alpha beneran mentok di 1
         Color finalColor = img.color;
         finalColor.a = 1;
         img.color = finalColor;
@@ -116,12 +103,14 @@ public class EndGameCutsceneManager : MonoBehaviour
 
     void ClearHalaman(int startIndex, int endIndex)
     {
-        // Looping buat ngembaliin alpha 4 gambar sebelumnya jadi 0 (hilang)
         for (int i = startIndex; i <= endIndex; i++)
         {
-            Color c = daftarGambar[i].color;
-            c.a = 0;
-            daftarGambar[i].color = c;
+            if (daftarGambar[i] != null)
+            {
+                Color c = daftarGambar[i].color;
+                c.a = 0;
+                daftarGambar[i].color = c;
+            }
         }
     }
 }
