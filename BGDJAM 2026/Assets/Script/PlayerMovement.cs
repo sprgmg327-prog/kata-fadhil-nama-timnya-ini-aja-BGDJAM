@@ -19,13 +19,20 @@ public class PlayerRunner : MonoBehaviour
 
     [Header("Audio (SFX)")]
     public AudioSource audioSource; 
+    public AudioClip jumpSound; 
     public AudioClip trampolineSound; 
     public AudioClip collisionSound; 
     public AudioClip winSound; 
+    // attackSound sudah dihapus
 
     [Header("Audio (BGM)")]
-    public AudioSource bgmSource; // Slot baru khusus untuk Musik Latar
-    public AudioClip backgroundMusic; // File musiknya
+    public AudioSource bgmSource; 
+    public AudioClip backgroundMusic;
+
+    [Header("Referensi Visual & Animasi")]
+    public SpriteRenderer spriteRenderer; 
+    public Animator animator;             
+    public Sprite spriteMukul;          
 
     [Header("Deteksi Lantai")]
     public Transform groundCheck;
@@ -46,7 +53,6 @@ public class PlayerRunner : MonoBehaviour
         rb.gravityScale = 3.5f; 
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
-        // Inisialisasi BGM agar loop dan otomatis menyala
         SetupBGM();
     }
 
@@ -55,9 +61,9 @@ public class PlayerRunner : MonoBehaviour
         if (bgmSource != null && backgroundMusic != null)
         {
             bgmSource.clip = backgroundMusic;
-            bgmSource.loop = true;      // Agar musik mengulang terus
+            bgmSource.loop = true;      
             bgmSource.playOnAwake = true; 
-            bgmSource.Play();           // Mulai mainkan musik
+            bgmSource.Play();           
         }
     }
 
@@ -73,6 +79,20 @@ public class PlayerRunner : MonoBehaviour
         rb.linearVelocity = new Vector2(moveDirection * currentSpeed, rb.linearVelocity.y);
     }
 
+    // --- LOGIKA GANTI SPRITE MANUAL (HANYA SAAT MUKUL) ---
+    IEnumerator TemporarySpriteChange(Sprite targetSprite, float duration)
+    {
+        if (animator != null && spriteRenderer != null && targetSprite != null)
+        {
+            animator.enabled = false;          // Matikan animator agar sprite tidak tertimpa animasi
+            spriteRenderer.sprite = targetSprite; 
+
+            yield return new WaitForSeconds(duration); 
+
+            animator.enabled = true;           // Nyalakan kembali animator
+        }
+    }
+
     void HandleJump()
     {
         if (Input.GetKeyDown(KeyCode.Space))
@@ -80,11 +100,13 @@ public class PlayerRunner : MonoBehaviour
             if (isGrounded)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
+                PlaySFX(jumpSound);
             }
             else if (canAirJump)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocity.x, highJumpForce);
                 canAirJump = false; 
+                PlaySFX(jumpSound);
             }
         }
 
@@ -98,20 +120,19 @@ public class PlayerRunner : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F))
         {
+            // 1. Ganti Sprite ke frame memukul selama 0.3 detik
+            StartCoroutine(TemporarySpriteChange(spriteMukul, 0.3f));
+
+            // 2. Logika Hitbox (Deteksi objek yang dipukul)
             Collider2D[] hitObjects = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, destructibleLayer);
 
             foreach (Collider2D obj in hitObjects)
             {
                 ItemStateChanger state = obj.GetComponent<ItemStateChanger>();
-                
                 if (state != null && state.BisaDiinteraksi())
                 {
                     state.AktifkanPerubahan();
-                    
-                    if (obj.CompareTag("Bel"))
-                    {
-                        canAirJump = true;
-                    }
+                    if (obj.CompareTag("Bel")) canAirJump = true;
                 }
             }
         }
@@ -125,12 +146,7 @@ public class PlayerRunner : MonoBehaviour
         if (hitObj.CompareTag("Trampolin") && contact.normal.y > 0.5f)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, trampolineJumpForce);
-
-            if (audioSource != null && trampolineSound != null)
-            {
-                audioSource.PlayOneShot(trampolineSound);
-            }
-
+            PlaySFX(trampolineSound);
             return; 
         }
 
@@ -142,11 +158,7 @@ public class PlayerRunner : MonoBehaviour
             float collisionDot = Vector2.Dot(contact.normal, new Vector2(moveDirection, 0));
             if (collisionDot < -0.5f) 
             {
-                if (audioSource != null && collisionSound != null)
-                {
-                    audioSource.PlayOneShot(collisionSound);
-                }
-
+                PlaySFX(collisionSound);
                 TurnAround();
             }
         }
@@ -157,7 +169,6 @@ public class PlayerRunner : MonoBehaviour
         if (collision.CompareTag("Kopi"))
         {
             ItemStateChanger state = collision.GetComponent<ItemStateChanger>();
-            
             if (state != null && state.BisaDiinteraksi())
             {
                 currentSpeed *= 1.5f; 
@@ -167,15 +178,17 @@ public class PlayerRunner : MonoBehaviour
 
         if (collision.CompareTag("Dosen"))
         {
-            if (audioSource != null && winSound != null)
-            {
-                audioSource.PlayOneShot(winSound);
-            }
-
-            // Matikan BGM saat menang agar suasana lebih dramatis
+            PlaySFX(winSound);
             if (bgmSource != null) bgmSource.Stop();
-
             StartCoroutine(WaitAndNextLevel(1.5f)); 
+        }
+    }
+
+    void PlaySFX(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            audioSource.PlayOneShot(clip);
         }
     }
 

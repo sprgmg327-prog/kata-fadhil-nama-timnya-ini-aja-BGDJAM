@@ -124,17 +124,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0.008244008, y: -0.012725264}
+  m_Offset: {x: 0.008244008, y: 0.37271068}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
+    pivot: {x: 0.5, y: 0.1}
     oldSize: {x: 0.347, y: 0.935}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.35147256, y: 0.9745495}
+  m_Size: {x: 0.35147256, y: 0.9608653}
   m_EdgeRadius: 0
 --- !u!114 &-1702822514105046359
 MonoBehaviour:
@@ -149,6 +149,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spriteSetelahInteraksi: {fileID: 0}
+  namaParameterAnimasi: KenaPukul
   suaraInteraksi: {fileID: 8300000, guid: a68bf5567b42dcc4fb5d12afc3e48fef, type: 3}
   tembusSetelahInteraksi: 1
 --- !u!95 &132454077109961969

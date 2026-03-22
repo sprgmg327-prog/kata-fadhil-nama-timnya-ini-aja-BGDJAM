@@ -112,11 +112,15 @@ MonoBehaviour:
   tapJumpMultiplier: 0.5
   trampolineJumpForce: 20
   audioSource: {fileID: 7473397765617434924}
+  jumpSound: {fileID: 8300000, guid: badf499c3226e614cb781661889e429a, type: 3}
   trampolineSound: {fileID: 8300000, guid: e46f65aef5c3a8440b6fc3f67c6e7702, type: 3}
   collisionSound: {fileID: 8300000, guid: e147764cb297d844bbcc81cfa36afa65, type: 3}
   winSound: {fileID: 8300000, guid: 699c5ad5f9324d547bdf143f88d69df2, type: 3}
   bgmSource: {fileID: 7844184269587102342}
   backgroundMusic: {fileID: 8300000, guid: 972d9e06eaf851245884f9acc49b6433, type: 3}
+  spriteRenderer: {fileID: 6150950442038606930}
+  animator: {fileID: 3826803770789127338}
+  spriteMukul: {fileID: 3388622082468218700, guid: 971c40fafee3b144db60979b56660106, type: 3}
   groundCheck: {fileID: 3464974061605098388}
   groundCheckRadius: 0.2
   groundLayer:
